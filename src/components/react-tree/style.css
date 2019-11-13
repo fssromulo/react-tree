@@ -1,0 +1,11 @@
+ul > label > li {
+	list-style-type: none;
+}
+
+.esconder {
+	display: none;
+}
+
+.mostrar {
+	display: inline-block;
+}
