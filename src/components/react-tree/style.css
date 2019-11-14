@@ -1,11 +1,45 @@
-ul > label > li {
-	list-style-type: none;
+/* body {
+	margin: 3% 7% 0% 3%;
+} */
+
+ul  li {
+	 list-style-type: none;
 }
 
 .esconder {
 	display: none;
+	transition: 5;
 }
 
 .mostrar {
-	display: inline-block;
+	display: block;
+
+	transition: 1;
+}
+
+/* .bordas {
+	background-color: #cccccc;
+	cursor: pointer;
+	border-radius: 5px;
+} */
+
+.textRight123 {
+	float: right;
+	cursor: pointer;
+}
+
+
+.classe1 {
+	color: red;
+	font-size: 20px;
+}
+
+.classe2 {
+	color: green;
+	font-size: 20px;
+}
+
+.classe3 {
+	color: yellow;
+	font-size: 20px;
 }
