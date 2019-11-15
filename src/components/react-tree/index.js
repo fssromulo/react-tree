@@ -1,206 +1,274 @@
 import React, { Component } from 'react';
-import $ from "jquery";
+import $ from 'jquery';
 import './style.css';
 
 class ReactTree extends Component {
 
+
 	state = {
 		objListData: this.props.arrDadosArvore,
-		itemComponente: '',
-		arrTeste: []
+		itemComponente: ''
 	}
 
-	iniciaComponente() {
-		let retorno_final = [];
+	componentInit() {
+		let objFinalContent = [];
 		// eslint-disable-next-line
-		for (let [key, value] of Object.entries(this.state.objListData)) {
-			retorno_final.push(this.montarComponente(value, value.level));
+		for (let [key, objItem] of Object.entries(this.state.objListData)) {
+			objFinalContent.push(this.buildComponent(objItem, objItem.level));
 		}
-		return (retorno_final);
+		return (objFinalContent);
 	}
 
-	abrirFecharArvore = (objEvent) => {
+	openCloseTree = (objEvent) => {
 
-		let id_elemento = objEvent.currentTarget.id;
-		let tree_level = objEvent.currentTarget.getAttribute("data-tree-level");
+		let id_element = objEvent.currentTarget.parentElement.getAttribute('data-open-close');
+		let tree_level = objEvent.currentTarget.parentElement.getAttribute('data-tree-level');
 
-		let objElementosFilhos =
-			document.getElementById(id_elemento).querySelectorAll('ul');
+		let objChildElements =
+			document.getElementById(id_element).querySelectorAll('ul');
 
+		for (let i = 0; i <= objChildElements.length - 1; i++) {
+			let my_id = objChildElements[i].id;
+			let child_tree_level = objChildElements[i].getAttribute("data-tree-level");
 
-		for (let i = 0; i <= objElementosFilhos.length - 1; i++) {
-			let meu_id = objElementosFilhos[i].id;
-			let tree_level_filho = objElementosFilhos[i].getAttribute("data-tree-level");
+			if ((parseInt(tree_level) + 1) === parseInt(child_tree_level)) {
 
+				if ($(`#${my_id}`).hasClass('show-tree-items')) {
 
-			if ((parseInt(tree_level) + 1) === parseInt(tree_level_filho)) {
+					$(`#open-${id_element}`)
+						.removeClass('hide-tree-items')
+						.addClass('show-tree-items');
 
-				if ($(`#${meu_id}`).hasClass('mostrar')) {
-					$(`#${meu_id}`).removeClass('mostrar');
-					$(`#${meu_id}`).addClass('esconder');
+					$(`#close-${id_element}`)
+						.removeClass('show-tree-items')
+						.addClass('hide-tree-items');
+
+					$(`#${my_id}`)
+						.removeClass('show-tree-items')
+						.addClass('hide-tree-items');
 					continue;
 				}
 
-				$(`#${meu_id}`).removeClass('esconder');
-				$(`#${meu_id}`).addClass('mostrar');
+				$(`#close-${id_element}`)
+					.removeClass('hide-tree-items')
+					.addClass('show-tree-items');
+
+				$(`#open-${id_element}`)
+					.removeClass('show-tree-items')
+					.addClass('hide-tree-items');
+
+				$(`#${my_id}`)
+					.removeClass('hide-tree-items')
+					.addClass('show-tree-items');
 			}
 		}
 
 	}
 
-	marcarDesmarcarItens = (objEvent) => {
+	undoIndeterminateState = (objEventElement) => {
+		let { id } = objEventElement;
+		document.getElementById(`${id}`).indeterminate = false;
+		$(`#check-${id}`).removeProp('indeterminate', false);
+	}
 
-		let id_elemento = objEvent.currentTarget.parentElement.getAttribute('data-tree');
+	setItemsChecked = (objEvent) => {
 
-		let tree_level = objEvent.currentTarget.getAttribute("data-tree-level");
+		let id_element = objEvent.currentTarget.parentElement.getAttribute('data-tree');
 
-		let checkBox = document.getElementById(`check-${id_elemento}`);
+		let tree_level = objEvent.currentTarget.getAttribute('data-tree-level');
 
-		let objElementosFilhos =
-			document.getElementById(id_elemento).querySelectorAll('input[type="checkbox"]');
+		let checkBox = document.getElementById(`check-${id_element}`);
+
+		let objChildElements =
+			document.getElementById(id_element).querySelectorAll('input[type="checkbox"]');
 
 		let objElementosPai =
-			document.getElementById(id_elemento).parentElement;
+			document.getElementById(id_element).parentElement;
 
-		for (let i = 0; i <= objElementosFilhos.length - 1; i++) {
-			let meu_id = objElementosFilhos[i].id;
+		for (let i = 0; i <= objChildElements.length - 1; i++) {
+			let my_id = objChildElements[i].id;
+			this.undoIndeterminateState(objChildElements[i]);
+
 			if (checkBox.checked) {
-				$(`#${meu_id}`)
+				$(`#${my_id}`)
 					.prop('checked', true)
 					.addClass('filled-in');
 				continue;
 			}
 
-			$(`#${meu_id}`).prop('checked', false);
+			$(`#${my_id}`).prop('checked', false);
+
 		}
 
 		// Depois de checar os itens da arvore, faz o rever para marcar o pai caso todos selecionads, parcial ou nenhum
-		if (parseInt(tree_level) > 0) {
-			this.marcarDesmarcarItensPais(objElementosPai, 0);
-			return;
-		}
+		// if (parseInt(tree_level) > 0) {
+		// 	this.setItemsCheckedParentElements(objElementosPai);
+		// 	return;
+		// }
 
-		this.marcarDesmarcarItensPais(objElementosPai, 1);
+		this.setItemsCheckedParentElements(objElementosPai);
 	}
 
-	marcarDesmarcarItensPais = (objPaisPercorrer, teste = 0) => {
-		// console.log('marcarDesmarcarItensPais >', objPaisPercorrer);
+	setItemsCheckedParentElements = (objParentElement) => {
 		try {
-			if (objPaisPercorrer.parentElement.previousElementSibling != null && teste === 0) {
-				this.marcarDesmarcarItensPais(objPaisPercorrer.parentElement);
+			let id_element = objParentElement.id;
+			let elementHtml = document.getElementById(id_element);
+
+			if (elementHtml === null || elementHtml === undefined) {
+				return;
 			}
 
-			let id_elemento = objPaisPercorrer.id;
-			let objElementosFilhos =
-				document.getElementById(id_elemento).querySelectorAll('input[type="checkbox"]');
+			let objChildElements =
+				elementHtml.querySelectorAll('input[type="checkbox"]');
 
-			let contador = 0;
-			// debugger;
-			for (let i = 1; i <= objElementosFilhos.length - 1; i++) {
-
-				if (objElementosFilhos[i].checked) {
-					contador++;
+			let counter = 0;
+			for (let i = 1; i <= objChildElements.length - 1; i++) {
+				if (objChildElements[i].checked) {
+					counter++;
 				}
 			}
 
-			$(`#${id_elemento}`)
-				.removeClass('classe1')
-				.removeClass('classe2')
-				.removeClass('classe3');
+			document.getElementById(`check-${id_element}`).indeterminate = false;
 
-			document.getElementById(`check-${id_elemento}`).indeterminate = false;
-
-			if (contador === 0) {
-				// $(`#${id_elemento}`).addClass('classe1');
-				$(`#check-${id_elemento}`)
+			if (counter === 0) {
+				$(`#check-${id_element}`)
 					.addClass('filled-in')
 					.prop('checked', false);
 			}
 
-			if (contador >= objElementosFilhos.length - 1) {
-				// $(`#${id_elemento}`)
-				// 	.addClass('classe2');
-				$(`#check-${id_elemento}`)
+			if (counter >= objChildElements.length - 1) {
+				$(`#check-${id_element}`)
 					.prop('checked', false);
 
-				$(`#check-${id_elemento}`)
+				$(`#check-${id_element}`)
 					.addClass('filled-in')
 					.prop('checked', true);
 			}
 
-			// debugger
-			if (contador > 0 && contador < objElementosFilhos.length - 1) {
-				$(`#check-${id_elemento}`)
+			if (counter > 0 && counter < objChildElements.length - 1) {
+				$(`#check-${id_element}`)
 					.removeClass('filled-in')
 					.removeProp('checked');
-				$(`#check-${id_elemento}`).removeProp('checked');
-				// $(`#${id_elemento}`).addClass('classe3');
 
-				document.getElementById(`check-${id_elemento}`).indeterminate = true;
+				$(`#check-${id_element}`).removeProp('checked');
 
-				return;
+				document.getElementById(`check-${id_element}`).indeterminate = true;
 			}
 
+			if (objParentElement.parentElement.previousElementSibling != null) {
+				this.setItemsCheckedParentElements(objParentElement.parentElement);
+			}
 
-			return '';
 		} catch (objError) {
 			console.error('Erro ao renderizar o componente', objError);
 		}
 	}
 
-	montarComponente(objPercorrer) {
-		let contador = 0;
-		let { name, id, level } = objPercorrer;
+	getLayoutComponent = (objItemsToComponent, counter) => {
+		let { name, id, level } = objItemsToComponent;
 
-		let str_retorno = [];
-		str_retorno.push(
-			<li className="collection-item" data-tree={id} >
-				<label htmlFor={"check-" + id} data-tree={id} data-tree-level={level}>
+		let layout = <li className="" data-tree={id}  >
+			<label className="cursor-pointer" htmlFor={"check-" + id} data-tree={id} data-tree-level={level}>
+
+				<input
+					className="filled-in"
+					type="checkbox"
+					name={'check-' + id}
+					id={"check-" + id}
+					data-tree-level={level}
+					onClick={this.setItemsChecked.bind(this)}
+				/>
+				<span className="cursor-pointer">{name}</span>
+
+			</label>
+
+			<div className="content-right cursor-pointer" data-open-close={id} data-tree-level={level}>
+				<div
+					className="opcao-abrir-fechar"
+					id={'open-' + id}
+					onClick={this.openCloseTree.bind(this)}
+				>
+					<i className="material-icons">keyboard_arrow_down</i>
+				</div>
+				<div
+					className="hide-tree-items opcao-abrir-fechar"
+					id={'close-' + id}
+					onClick={this.openCloseTree.bind(this)}
+				>
+					<i className="material-icons">keyboard_arrow_up</i>
+				</div>
+			</div>
+		</li>;
+
+		// Se o counter é menor que 1(um), significa que esse item não tem filhos.
+		if (counter < 1) {
+			layout = <li className="" data-tree={id}  >
+				<label className="cursor-pointer" htmlFor={"check-" + id} data-tree={id} data-tree-level={level}>
 
 					<input
-						type="checkbox"
 						className="filled-in"
+						type="checkbox"
 						name={'check-' + id}
 						id={"check-" + id}
 						data-tree-level={level}
-						onClick={this.marcarDesmarcarItens.bind(this)}
+						onClick={this.setItemsChecked.bind(this)}
 					/>
-					<span>{name}</span>
+					<span className="cursor-pointer">{name}</span>
 
 				</label>
-				<span
+				<div className="content-right cursor-pointer" data-open-close={id} data-tree-level={level}>
+					<div
+						className="opcao-abrir-fechar"
+						id={'open-' + id}
+						onClick={this.openCloseTree.bind(this)}
+						title="Último nível. Sem itens para listar"
+					>
+						<i className="material-icons">block</i>
+					</div>
+				</div>
+			</li>;
+		}
 
-					data-tree-level={level}
-					id={id}
-					onClick={this.abrirFecharArvore.bind(this)}
-				>Abrir</span>
-			</li>
+		return layout;
+	}
+
+	buildComponent(objItensComponent) {
+		let counter = 0;
+		let { name, id, level } = objItensComponent;
+
+		let objContentComponent = [];
+		counter = Object.keys(objItensComponent.children).length;
+
+		objContentComponent.push(
+			this.getLayoutComponent({name, id, level}, counter)
 		);
 
-		if (!objPercorrer.hasOwnProperty('children') || Object.keys(objPercorrer).length < 1) {
+		if (!objItensComponent.hasOwnProperty('children') || Object.keys(objItensComponent).length < 1) {
 			return;
 		}
 
-		contador = Object.keys(objPercorrer.children).length;
-		for (let i = 0; i <= contador; i++) {
-			if (objPercorrer.children[i] !== undefined) {
-				str_retorno.push(this.montarComponente(objPercorrer.children[i], objPercorrer.level));
+		counter = Object.keys(objItensComponent.children).length;
+		for (let i = 0; i <= counter; i++) {
+			if (objItensComponent.children[i] !== undefined) {
+				objContentComponent.push(
+					this.buildComponent(objItensComponent.children[i], objItensComponent.level)
+				);
 			}
 		}
 
-		let str_class = 'collection';
-		str_class += ' esconder';
+		let str_class = 'browser-default ';
+		str_class += ' hide-tree-items';
 		if (level === 0) {
-			str_class += ' mostrar';
+			str_class += ' show-tree-items';
 		}
 
-		return (<ul key={id} id={id} className={str_class} data-tree-level={level}> {str_retorno} </ul>);
+		return (<ul key={'ul-li-' + id} id={id} className={str_class} data-tree-level={level}> {objContentComponent} </ul>);
 	}
 
 	render() {
-		const itemComponente = this.iniciaComponente();
+		const itemComponente = this.componentInit();
 		return (
-			<div>
+			<div className="fundo">
 				{itemComponente}
 			</div>
 		);
